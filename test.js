@@ -28,6 +28,7 @@ describe('should vulcanize web components:', function () {
 			var dest = path.join('tmp', 'src', el);
 			mkdirp.sync(dest);
 			copyTestFile('fixture/index.html', path.join(dest, 'index.html'));
+			copyTestFile('fixture/index-absolute.html', path.join(dest, 'index-absolute.html'));
 			copyTestFile('fixture/import.html', path.join(dest, 'import.html'));
 		});
 	});
@@ -51,6 +52,32 @@ describe('should vulcanize web components:', function () {
 			cwd: __dirname,
 			base: path.join(__dirname, 'tmp', 'src'),
 			path: path.join('tmp', 'src', 'index.html'),
+			contents: fs.readFileSync(path.join('tmp', 'src', 'index.html'))
+		}));
+
+		stream.end();
+	});
+
+	it('absolute import', function (cb) {
+		var stream = vulcanize({abspath: path.join(__dirname, 'tmp', 'src')});
+
+		stream.on('data', function (file) {
+			if (/\.html$/.test(file.path)) {
+				assert.equal(file.relative, 'index-absolute.html');
+				assert(/Imported/.test(file.contents.toString()));
+				return;
+			}
+
+			assert.equal(file.relative, 'index.js');
+			assert(/Polymer/.test(file.contents.toString()));
+		});
+
+		stream.on('end', cb);
+
+		stream.write(new gutil.File({
+			cwd: __dirname,
+			base: path.join(__dirname, 'tmp', 'src'),
+			path: path.join('tmp', 'src', 'index-absolute.html'),
 			contents: fs.readFileSync(path.join('tmp', 'src', 'index.html'))
 		}));
 
